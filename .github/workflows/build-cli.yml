@@ -1,0 +1,37 @@
+name: Build ImeWlConverterCmd SelfContained SingleFile
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # 支持网页手动点运行
+
+jobs:
+  build-windows-cli:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          # 和项目匹配，原项目是 .NET6，不要盲目上10，会编译报错
+          dotnet-version: '6.0.x'
+
+      - name: Publish Self-contained SingleFile (win-x64)
+        run: |
+          dotnet publish src/ImeWlConverterCmd `
+            -c Release `
+            -r win-x64 `
+            -p:PublishSingleFile=true `
+            -p:SelfContained=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o ./publish-output
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ImeWlConverterCmd-win-x64-singlefile
+          path: ./publish-output/ImeWlConverterCmd.exe
